@@ -9,6 +9,8 @@ apt-get update -y && \
 # Install Rust
 su vagrant -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
 source /home/vagrant/.cargo/env
+rustup install nightly
+rustup default nightly
 rustup target add thumbv6m-none-eabi
 
 # $PATH

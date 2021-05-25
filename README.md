@@ -19,7 +19,7 @@
    arduino-cli board list
    ```
 
-1. Test by running the example. You may need to press the reset button on your board before uploading. 
+1. Test by running the example. You may need to press the reset button on your board before uploading.
 
    ```shell
    cd apps/blinky
@@ -29,3 +29,8 @@
    ```
 
    If you are using a board other than the Nano 33 IOT then find your board [here](https://github.com/atsamd-rs/atsamd) or elsewhere and duplicate the example project and replace the dependency and code to use the correct BSP.
+
+
+## Inspiration
+
+* [smart-home](https://github.com/olback/smart-home)
