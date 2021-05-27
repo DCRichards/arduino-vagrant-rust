@@ -2,12 +2,13 @@
 #![no_main]
 #![feature(default_alloc_error_handler)]
 
-extern crate arduino_nano33iot as hal;
 extern crate alloc;
+extern crate arduino_nano33iot as hal;
 
 use core::convert::Infallible;
 
 use {
+    hal::adc::Adc,
     hal::clock::GenericClockController,
     hal::delay::Delay,
     hal::entry,
@@ -18,11 +19,11 @@ use {
 };
 
 use {
+    alloc_cortex_m::CortexMHeap,
     cortex_m::peripheral::NVIC,
     onewire::*,
     usb_device::prelude::*,
     usbd_serial::{SerialPort, USB_CLASS_CDC},
-    alloc_cortex_m::CortexMHeap,
 };
 
 #[global_allocator]
@@ -34,7 +35,6 @@ static mut USB_SERIAL: Option<SerialPort<UsbBus>> = None;
 
 #[entry]
 fn main() -> ! {
-    // Initialise heap
     unsafe {
         ALLOCATOR.init(cortex_m_rt::heap_start() as usize, 1024);
     };
@@ -78,43 +78,44 @@ fn main() -> ! {
     }
 
     let mut led = pins.led_sck.into_open_drain_output(&mut pins.port);
-    let mut pin_d2 = pins.d2.into_readable_open_drain_output(&mut pins.port);
-    let mut one_wire = OneWire::new(&mut pin_d2, false);
+    let mut temp_sensor = pins.d2.into_readable_open_drain_output(&mut pins.port);
+    let mut adc = Adc::adc(peripherals.ADC, &mut peripherals.PM, &mut clocks);
+    let mut moisture_sensor = pins.a0.into_function_b(&mut pins.port);
 
-    match one_wire.reset(&mut delay) {
-        Ok(_) => {}
-        Err(_) => {
-            log_str("error: unable to reset, likely a missing pullup or line error\r\n");
+    // TODO: Move this into its own struct and methods.
+    let mut one_wire = OneWire::new(&mut temp_sensor, false);
+    one_wire.reset(&mut delay).unwrap();
+
+    let mut search = DeviceSearch::new_for_family(ds18b20::FAMILY_CODE);
+    match one_wire.search_next(&mut search, &mut delay).unwrap() {
+        None => {
+            log("No temperature sensor found\r\n".as_bytes());
             loop {}
         }
-    };
+        Some(device) => {
+            led.set_high().unwrap();
+            let sensor = DS18B20::new::<Infallible>(device).unwrap();
 
-    let mut search = DeviceSearch::new();
-    loop {
-        while let Some(device) = one_wire.search_next(&mut search, &mut delay).unwrap() {
-            match device.address[0] {
-                ds18b20::FAMILY_CODE => {
-                    led.set_high().unwrap();
-                    let sensor = DS18B20::new::<Infallible>(device).unwrap();
-                    let resolution = sensor
-                        .measure_temperature(&mut one_wire, &mut delay)
-                        .unwrap();
-                    delay.delay_ms(resolution.time_ms());
-                    let raw = sensor.read_temperature(&mut one_wire, &mut delay).unwrap();
-                    let (integer, fraction) = ds18b20::split_temp(raw);
-                    let temperature: f32 = integer as f32 + fraction as f32/10000_f32;
-                    log(alloc::format!("Current temperature: {}°C\r\n", temperature).as_bytes());
-                }
-                _ => {
-                    log_str("unknown device\r\n");
-                }
+            loop {
+                let resolution = sensor
+                    .measure_temperature(&mut one_wire, &mut delay)
+                    .unwrap();
+                delay.delay_ms(resolution.time_ms());
+                let raw = sensor.read_temperature(&mut one_wire, &mut delay).unwrap();
+                let (integer, fraction) = ds18b20::split_temp(raw);
+                let temperature: f32 = integer as f32 + fraction as f32 / 10000_f32;
+
+                // TODO: also move this into its own struct.
+                let moisture: u16 = adc.read(&mut moisture_sensor).unwrap();
+                log(alloc::format!(
+                    "Temperature: {}°C\r\nMoisture: {}\r\n",
+                    temperature,
+                    moisture
+                )
+                .as_bytes());
             }
         }
-    }
-}
-
-fn log_str(msg: &str) {
-    log(msg.as_bytes());
+    };
 }
 
 fn log(bytes: &[u8]) {
