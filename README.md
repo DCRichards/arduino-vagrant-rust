@@ -28,7 +28,7 @@
    arduino-cli upload -i target/blinky.bin -b arduino:samd:nano_33_iot -p /dev/ttyACM0
    ```
 
-   If you are using a board other than the Nano 33 IOT then find your board [here](https://github.com/atsamd-rs/atsamd) or elsewhere and duplicate the example project and replace the dependency and code to use the correct BSP.
+   If you are using a board other than the Nano 33 IOT then find your board [here](https://github.com/atsamd-rs/atsamd) or elsewhere and duplicate the example project and replace the dependency and code to use the correct Board Support Crate.
 
 
 ## Inspiration
