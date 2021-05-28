@@ -80,6 +80,7 @@ fn main() -> ! {
     let mut led = pins.led_sck.into_open_drain_output(&mut pins.port);
     let mut temp_sensor = pins.d2.into_readable_open_drain_output(&mut pins.port);
     let mut adc = Adc::adc(peripherals.ADC, &mut peripherals.PM, &mut clocks);
+    // adc.reference(hal::pac::adc::refctrl::REFSEL_A::AREFA);
     let mut moisture_sensor = pins.a0.into_function_b(&mut pins.port);
 
     // TODO: Move this into its own struct and methods.
