@@ -1,9 +1,11 @@
 use {
     core::convert::Infallible,
     hal::delay::Delay,
+    hal::gpio::v2::{Output, Readable, PB10},
+    hal::gpio::Pin,
     hal::prelude::_embedded_hal_blocking_delay_DelayMs,
     onewire::ds18b20::{split_temp, DS18B20},
-    onewire::{DeviceSearch, OneWire, OpenDrainOutput},
+    onewire::{DeviceSearch, OneWire},
 };
 
 /// Represents a phyiscal temperature sensor.
@@ -15,7 +17,7 @@ pub struct Temperature<'a> {
 
 impl<'a> Temperature<'a> {
     /// Initialise the sensor.
-    pub fn new(pin: &'a mut dyn OpenDrainOutput<()>, delay: &'a mut Delay) -> Self {
+    pub fn new(pin: &'a mut Pin<PB10, Output<Readable>>, delay: &'a mut Delay) -> Self {
         let mut one_wire = OneWire::new(pin, false);
         one_wire.reset(delay).unwrap();
 
