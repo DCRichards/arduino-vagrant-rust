@@ -2,10 +2,11 @@ use {
     core::convert::Infallible,
     hal::delay::Delay,
     hal::prelude::_embedded_hal_blocking_delay_DelayMs,
-    onewire::ds18b20::*,
+    onewire::ds18b20::{split_temp, DS18B20},
     onewire::{DeviceSearch, OneWire, OpenDrainOutput},
 };
 
+/// Represents a phyiscal temperature sensor.
 pub struct TemperatureSensor<'a> {
     delay: &'a mut Delay,
     one_wire: OneWire<'a, ()>,
@@ -13,10 +14,12 @@ pub struct TemperatureSensor<'a> {
 }
 
 impl<'a> TemperatureSensor<'a> {
+    /// Initialise the sensor.
     pub fn new(pin: &'a mut dyn OpenDrainOutput<()>, delay: &'a mut Delay) -> Self {
         let mut one_wire = OneWire::new(pin, false);
         one_wire.reset(delay).unwrap();
-        let mut search = DeviceSearch::new_for_family(FAMILY_CODE);
+
+        let mut search = DeviceSearch::new_for_family(onewire::ds18b20::FAMILY_CODE);
         let sensor = match one_wire.search_next(&mut search, delay).unwrap() {
             None => panic!("No device found"),
             Some(device) => DS18B20::new::<Infallible>(device).unwrap(),
@@ -29,6 +32,7 @@ impl<'a> TemperatureSensor<'a> {
         }
     }
 
+    /// Reads the current temperature.
     pub fn read(&mut self) -> f32 {
         let resolution = self
             .sensor

@@ -2,7 +2,7 @@ use {
     cortex_m::peripheral::NVIC,
     hal::clock::GenericClockController,
     hal::gpio::{Floating, Input, Pa24, Pa25, Port},
-    hal::pac::interrupt,
+    hal::pac::{interrupt, PM, USB},
     hal::usb::usb_device::bus::UsbBusAllocator,
     hal::UsbBus,
     usb_device::prelude::*,
@@ -17,9 +17,9 @@ pub struct USBLogger {}
 
 impl USBLogger {
     pub fn new(
-        usb: hal::pac::USB,
+        usb: USB,
         clocks: &mut GenericClockController,
-        pm: &mut hal::pac::PM,
+        pm: &mut PM,
         dm: Pa24<Input<Floating>>,
         dp: Pa25<Input<Floating>>,
         port: &mut Port,

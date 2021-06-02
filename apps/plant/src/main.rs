@@ -6,17 +6,15 @@ extern crate alloc;
 extern crate arduino_nano33iot as hal;
 
 use {
-    hal::adc::Adc,
     hal::clock::GenericClockController,
     hal::delay::Delay,
     hal::entry,
     hal::pac::{CorePeripherals, Peripherals},
-    hal::prelude::*,
 };
 
 use alloc_cortex_m::CortexMHeap;
 
-mod temperature;
+mod sensors;
 mod usb_logger;
 
 #[global_allocator]
@@ -50,21 +48,25 @@ fn main() -> ! {
     );
 
     // let mut led = pins.led_sck.into_open_drain_output(&mut pins.port);
-    let mut temp_sensor = pins.d2.into_readable_open_drain_output(&mut pins.port);
-    let mut adc = Adc::adc(peripherals.ADC, &mut peripherals.PM, &mut clocks);
-    // adc.reference(hal::pac::adc::refctrl::REFSEL_A::AREFA);
-    let mut moisture_sensor = pins.a0.into_function_b(&mut pins.port);
+    let mut sensor_pin = pins.d2.into_readable_open_drain_output(&mut pins.port);
+    let moisture_pin = pins.a0.into_function_b(&mut pins.port);
 
-    let mut temperature_sensor = temperature::TemperatureSensor::new(&mut temp_sensor, &mut delay);
+    let mut moisture_sensor = sensors::MoistureSensor::new(
+        moisture_pin,
+        peripherals.ADC,
+        &mut peripherals.PM,
+        &mut clocks,
+    );
+    let mut temperature_sensor = sensors::TemperatureSensor::new(&mut sensor_pin, &mut delay);
 
     loop {
-        let current_temp = temperature_sensor.read();
-        let current_moisture: u16 = adc.read(&mut moisture_sensor).unwrap();
+        let temperature = temperature_sensor.read();
+        let moisture = moisture_sensor.read();
         logger.log(
             alloc::format!(
                 "Temperature: {}°C\r\nMoisture: {}\r\n",
-                current_temp,
-                current_moisture
+                temperature,
+                moisture,
             )
             .as_bytes(),
         );
