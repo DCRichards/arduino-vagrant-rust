@@ -8,7 +8,7 @@ use {
     onewire::{DeviceSearch, OneWire},
 };
 
-/// Represents a phyiscal temperature sensor.
+/// Represents a physical temperature sensor.
 pub struct Temperature<'a> {
     delay: &'a mut Delay,
     one_wire: OneWire<'a, ()>,
