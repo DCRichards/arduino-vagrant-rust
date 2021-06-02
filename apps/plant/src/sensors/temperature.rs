@@ -7,13 +7,13 @@ use {
 };
 
 /// Represents a phyiscal temperature sensor.
-pub struct TemperatureSensor<'a> {
+pub struct Temperature<'a> {
     delay: &'a mut Delay,
     one_wire: OneWire<'a, ()>,
     sensor: DS18B20,
 }
 
-impl<'a> TemperatureSensor<'a> {
+impl<'a> Temperature<'a> {
     /// Initialise the sensor.
     pub fn new(pin: &'a mut dyn OpenDrainOutput<()>, delay: &'a mut Delay) -> Self {
         let mut one_wire = OneWire::new(pin, false);
@@ -25,7 +25,7 @@ impl<'a> TemperatureSensor<'a> {
             Some(device) => DS18B20::new::<Infallible>(device).unwrap(),
         };
 
-        TemperatureSensor {
+        Temperature {
             delay: delay,
             one_wire: one_wire,
             sensor: sensor,

@@ -4,6 +4,7 @@ use {
     hal::gpio::{Floating, Input, Pa24, Pa25, Port},
     hal::pac::{interrupt, PM, USB},
     hal::usb::usb_device::bus::UsbBusAllocator,
+    hal::usb_allocator,
     hal::UsbBus,
     usb_device::prelude::*,
     usbd_serial::{SerialPort, USB_CLASS_CDC},
@@ -26,7 +27,7 @@ impl USBLogger {
         nvic: &mut hal::pac::NVIC,
     ) -> Self {
         let bus_allocator = unsafe {
-            USB_ALLOCATOR = Some(hal::usb_allocator(usb, clocks, pm, dm, dp, port));
+            USB_ALLOCATOR = Some(usb_allocator(usb, clocks, pm, dm, dp, port));
             USB_ALLOCATOR.as_ref().unwrap()
         };
 

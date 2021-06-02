@@ -1,4 +1,4 @@
 mod temperature;
-pub use temperature::TemperatureSensor;
+pub use temperature::Temperature;
 mod moisture;
-pub use moisture::MoistureSensor;
+pub use moisture::Moisture;

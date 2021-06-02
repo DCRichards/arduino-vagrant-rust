@@ -8,12 +8,12 @@ use {
 };
 
 /// Represents a physical soil moisture sensor.
-pub struct MoistureSensor {
+pub struct Moisture {
     adc: Adc<ADC>,
     pin: Pin<PA02, Alternate<B>>,
 }
 
-impl MoistureSensor {
+impl Moisture {
     /// Initialise the sensor.
     pub fn new(
         pin: Pin<PA02, Alternate<B>>,
@@ -21,10 +21,14 @@ impl MoistureSensor {
         pm_peripheral: &mut PM,
         clocks: &mut GenericClockController,
     ) -> Self {
-        MoistureSensor {
-            adc: Adc::adc(adc_peripheral, pm_peripheral, clocks),
-            pin: pin,
-        }
+        let mut adc = Adc::adc(adc_peripheral, pm_peripheral, clocks);
+        // AREFA = AREF pin according to
+        // https://ww1.microchip.com/downloads/en/DeviceDoc/SAM-D21DA1-Family-Data-Sheet-DS40001882G.pdf#_OPENTOPIC_TOC_PROCESSING_d10240e23103
+        adc.reference(hal::pac::adc::refctrl::REFSEL_A::AREFA);
+        // Set the gain to be 1x, as the default is /2.
+        adc.gain(hal::pac::adc::inputctrl::GAIN_A::_1X);
+
+        Moisture { adc: adc, pin: pin }
     }
 
     /// Reads the current moisture level.

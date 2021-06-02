@@ -279,7 +279,6 @@ dependencies = [
  "arduino_nano33iot",
  "cortex-m 0.7.2",
  "cortex-m-rt",
- "nb 1.0.0",
  "onewire",
  "usb-device",
  "usbd-serial",
