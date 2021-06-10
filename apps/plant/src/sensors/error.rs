@@ -1,5 +1,5 @@
-#[derive(Debug)]
 /// Errors whilst interacting with sensors
+#[derive(Debug)]
 pub enum SensorError {
     /// Error interacting with onewire bus
     OneWireError(onewire::Error<()>),
