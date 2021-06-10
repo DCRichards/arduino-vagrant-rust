@@ -14,9 +14,11 @@ static mut USB_ALLOCATOR: Option<UsbBusAllocator<UsbBus>> = None;
 static mut USB_BUS: Option<UsbDevice<UsbBus>> = None;
 static mut USB_SERIAL: Option<SerialPort<UsbBus>> = None;
 
+/// Represents a logger which logs over USB Serial.
 pub struct USBLogger {}
 
 impl USBLogger {
+    /// Get the log instance
     pub fn new(
         usb: USB,
         clocks: &mut GenericClockController,
@@ -49,6 +51,7 @@ impl USBLogger {
         USBLogger {}
     }
 
+    /// Log writes a log entry
     pub fn log(&self, bytes: &[u8]) {
         cortex_m::interrupt::free(|_| unsafe {
             USB_BUS.as_mut().map(|_| {

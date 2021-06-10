@@ -1,4 +1,6 @@
 use {
+    super::error::SensorError,
+    super::Result,
     hal::adc::Adc,
     hal::clock::GenericClockController,
     hal::gpio::v2::{Alternate, B, PA02},
@@ -32,8 +34,10 @@ impl Moisture {
     }
 
     /// Reads the current moisture level.
-    pub fn read(&mut self) -> u16 {
-        // adc.reference(hal::pac::adc::refctrl::REFSEL_A::AREFB);
-        self.adc.read(&mut self.pin).unwrap()
+    pub fn read(&mut self) -> Result<u16> {
+        return match self.adc.read(&mut self.pin) {
+            Ok(val) => Ok(val),
+            Err(_) => Err(SensorError::ReadError),
+        };
     }
 }

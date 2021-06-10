@@ -57,13 +57,14 @@ fn main() -> ! {
         &mut peripherals.PM,
         &mut clocks,
     );
-    let mut temperature_sensor = sensors::Temperature::new(&mut temperature_pin, &mut delay);
+    let mut temperature_sensor =
+        sensors::Temperature::new(&mut temperature_pin, &mut delay).unwrap();
 
     led.set_high().unwrap();
 
     loop {
-        let temperature = temperature_sensor.read();
-        let moisture = moisture_sensor.read();
+        let temperature = temperature_sensor.read().unwrap();
+        let moisture = moisture_sensor.read().unwrap();
         logger.log(
             alloc::format!(
                 "Temperature: {}°C\r\nMoisture: {}\r\n",
