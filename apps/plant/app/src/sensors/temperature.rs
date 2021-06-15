@@ -5,7 +5,8 @@ use {
     hal::gpio::v2::{Output, Readable, PB10},
     hal::gpio::Pin,
     hal::prelude::_embedded_hal_blocking_delay_DelayMs,
-    onewire::ds18b20::{split_temp, DS18B20},
+    lib::temp_from_raw,
+    onewire::ds18b20::DS18B20,
     onewire::{DeviceSearch, OneWire},
 };
 
@@ -44,8 +45,7 @@ impl<'a> Temperature<'a> {
         let raw = self
             .sensor
             .read_temperature(&mut self.one_wire, self.delay)?;
-        let (integer, fraction) = split_temp(raw);
 
-        Ok(integer as f32 + fraction as f32 / 10000_f32)
+        Ok(temp_from_raw(raw))
     }
 }

@@ -1,14 +1,2 @@
-[package]
-name = "plant"
-version = "0.0.0"
-authors = ["DCRichards"]
-edition = "2018"
-
-[dependencies]
-arduino_nano33iot = { version = "0.4.0", features = ["unproven", "usb"] }
-onewire = "0.3.13"
-usbd-serial = "0.1.1"
-usb-device = "0.2.8"
-cortex-m = "0.7.2"
-cortex-m-rt = "0.6.14"
-alloc-cortex-m = "0.4.1"
+[workspace]
+members = ["lib", "app"]
