@@ -1,0 +1,30 @@
+name: plant-ci
+
+on:
+  push:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        target: thumbv6m-none-eabi
+        override: true
+
+    - name: build
+      run: |
+        cd apps/plant
+        cargo build --release
+      
+    - name: test
+      run: |
+        cd apps/plant
+        CURRENT_TARGET=$(rustup show | grep Default | awk '{ print $3 }')
+        cargo test -p lib --target $CURRENT_TARGET
