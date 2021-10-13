@@ -1,10 +1,9 @@
 use {
     super::error::SensorError,
     super::Result,
-    hal::delay::Delay,
-    hal::gpio::v2::{Output, Readable, PB10},
-    hal::gpio::Pin,
-    hal::prelude::_embedded_hal_blocking_delay_DelayMs,
+    bsp::hal::delay::Delay,
+    bsp::hal::gpio::v2::pin::{Pin, ReadableOutput, PB10},
+    bsp::hal::prelude::_embedded_hal_blocking_delay_DelayMs,
     lib::temp_from_raw,
     onewire::ds18b20::DS18B20,
     onewire::{DeviceSearch, OneWire},
@@ -13,13 +12,13 @@ use {
 /// Represents a physical temperature sensor.
 pub struct Temperature<'a> {
     delay: &'a mut Delay,
-    one_wire: OneWire<'a, ()>,
+    one_wire: OneWire<'a, core::convert::Infallible>,
     sensor: DS18B20,
 }
 
 impl<'a> Temperature<'a> {
     /// Initialise the sensor.
-    pub fn new(pin: &'a mut Pin<PB10, Output<Readable>>, delay: &'a mut Delay) -> Result<Self> {
+    pub fn new(pin: &'a mut Pin<PB10, ReadableOutput>, delay: &'a mut Delay) -> Result<Self> {
         let mut one_wire = OneWire::new(pin, false);
         one_wire.reset(delay)?;
 

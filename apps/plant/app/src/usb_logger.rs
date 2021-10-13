@@ -1,11 +1,10 @@
 use {
+    bsp::hal::clock::GenericClockController,
+    bsp::hal::usb::UsbBus,
+    bsp::pac::{interrupt, PM, USB},
+    bsp::usb_allocator,
     cortex_m::peripheral::NVIC,
-    hal::clock::GenericClockController,
-    hal::gpio::{Floating, Input, Pa24, Pa25, Port},
-    hal::pac::{interrupt, PM, USB},
-    hal::usb::usb_device::bus::UsbBusAllocator,
-    hal::usb_allocator,
-    hal::UsbBus,
+    usb_device::bus::UsbBusAllocator,
     usb_device::prelude::*,
     usbd_serial::{SerialPort, USB_CLASS_CDC},
 };
@@ -23,13 +22,12 @@ impl USBLogger {
         usb: USB,
         clocks: &mut GenericClockController,
         pm: &mut PM,
-        dm: Pa24<Input<Floating>>,
-        dp: Pa25<Input<Floating>>,
-        port: &mut Port,
-        nvic: &mut hal::pac::NVIC,
+        dm: bsp::UsbDm,
+        dp: bsp::UsbDp,
+        nvic: &mut bsp::pac::NVIC,
     ) -> Self {
         let bus_allocator = unsafe {
-            USB_ALLOCATOR = Some(usb_allocator(usb, clocks, pm, dm, dp, port));
+            USB_ALLOCATOR = Some(usb_allocator(usb, clocks, pm, dm, dp));
             USB_ALLOCATOR.as_ref().unwrap()
         };
 

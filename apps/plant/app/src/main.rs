@@ -3,15 +3,17 @@
 #![feature(default_alloc_error_handler)]
 
 extern crate alloc;
-extern crate arduino_nano33iot as hal;
+extern crate arduino_nano33iot as bsp;
 
 use {
     alloc_cortex_m::CortexMHeap,
-    hal::clock::GenericClockController,
-    hal::delay::Delay,
-    hal::pac::{CorePeripherals, Peripherals},
-    hal::prelude::_atsamd_hal_embedded_hal_digital_v2_OutputPin,
-    hal::{entry, Pins},
+    bsp::entry,
+    bsp::hal::delay::Delay,
+    bsp::hal::pac::{CorePeripherals, Peripherals},
+    bsp::hal::prelude::*,
+    bsp::hal::thumbv6m::clock::GenericClockController,
+    bsp::Pins,
+    panic_halt as _,
 };
 
 mod sensors;
@@ -28,7 +30,7 @@ fn main() -> ! {
 
     let mut peripherals = Peripherals::take().unwrap();
     let mut core = CorePeripherals::take().unwrap();
-    let mut pins = Pins::new(peripherals.PORT);
+    let pins = Pins::new(peripherals.PORT);
     let mut clocks = GenericClockController::with_internal_32kosc(
         peripherals.GCLK,
         &mut peripherals.PM,
@@ -41,15 +43,14 @@ fn main() -> ! {
         peripherals.USB,
         &mut clocks,
         &mut peripherals.PM,
-        pins.usb_dm,
-        pins.usb_dp,
-        &mut pins.port,
+        pins.usb_dm.into(),
+        pins.usb_dp.into(),
         &mut core.NVIC,
     );
 
-    let mut led = pins.led_sck.into_open_drain_output(&mut pins.port);
-    let mut temperature_pin = pins.d2.into_readable_open_drain_output(&mut pins.port);
-    let moisture_pin = pins.a0.into_function_b(&mut pins.port);
+    let mut led: bsp::Led = pins.led_sck.into();
+    let mut temperature_pin = pins.d2.into_readable_output();
+    let moisture_pin = pins.a0.into_alternate();
 
     let mut moisture_sensor = sensors::Moisture::new(
         moisture_pin,

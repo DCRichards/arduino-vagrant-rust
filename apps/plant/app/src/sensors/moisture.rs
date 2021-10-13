@@ -1,12 +1,12 @@
 use {
     super::error::SensorError,
     super::Result,
-    hal::adc::Adc,
-    hal::clock::GenericClockController,
-    hal::gpio::v2::{Alternate, B, PA02},
-    hal::gpio::Pin,
-    hal::pac::{ADC, PM},
-    hal::prelude::_embedded_hal_adc_OneShot,
+    bsp::hal::adc::Adc,
+    bsp::hal::clock::GenericClockController,
+    bsp::hal::gpio::v2::pin::{Pin, PA02},
+    bsp::hal::gpio::v2::{Alternate, B},
+    bsp::hal::prelude::_embedded_hal_adc_OneShot,
+    bsp::pac::{ADC, PM},
 };
 
 /// Represents a physical soil moisture sensor.
@@ -26,9 +26,9 @@ impl Moisture {
         let mut adc = Adc::adc(adc_peripheral, pm_peripheral, clocks);
         // AREFA = AREF pin according to
         // https://ww1.microchip.com/downloads/en/DeviceDoc/SAM-D21DA1-Family-Data-Sheet-DS40001882G.pdf#_OPENTOPIC_TOC_PROCESSING_d10240e23103
-        adc.reference(hal::pac::adc::refctrl::REFSEL_A::AREFA);
+        adc.reference(bsp::pac::adc::refctrl::REFSEL_A::AREFA);
         // Set the gain to be 1x, as the default is /2.
-        adc.gain(hal::pac::adc::inputctrl::GAIN_A::_1X);
+        adc.gain(bsp::pac::adc::inputctrl::GAIN_A::_1X);
 
         Moisture { adc: adc, pin: pin }
     }

@@ -5,11 +5,12 @@ authors = ["DCRichards"]
 edition = "2018"
 
 [dependencies]
-arduino_nano33iot = { version = "0.4.0", features = ["unproven", "usb"] }
+arduino_nano33iot = { git = "https://github.com/atsamd-rs/atsamd.git", features = ["unproven", "usb"] }
+panic-halt = "0.2.0"
 onewire = "0.3.13"
 usbd-serial = "0.1.1"
 usb-device = "0.2.8"
-cortex-m = "0.7.2"
-cortex-m-rt = "0.6.14"
+cortex-m = "0.7.3"
+cortex-m-rt = { version = "0.7.0", features = ["device"] }
 alloc-cortex-m = "0.4.1"
 lib = { path = "../lib" }

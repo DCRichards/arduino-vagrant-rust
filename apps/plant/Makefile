@@ -21,5 +21,5 @@ test:
 
 .PHONY: clean
 clean:
-	rm $(TARGET_DIR)/$(OUT).bin
+	rm -f $(TARGET_DIR)/$(OUT).bin
 	cargo clean
