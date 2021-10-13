@@ -11,7 +11,7 @@ use {
     bsp::hal::delay::Delay,
     bsp::hal::pac::{CorePeripherals, Peripherals},
     bsp::hal::prelude::*,
-    bsp::hal::thumbv6m::clock::GenericClockController,
+    bsp::hal::clock::GenericClockController,
     bsp::Pins,
     panic_halt as _,
 };
