@@ -4,26 +4,31 @@ echo "----- provisioning -----"
 # adds the required kernel modules for serial over USB access.
 apt-get update -y && \
   apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi gcc-multilib \
-  usbutils libudev-dev build-essential libusb-1.0-0-dev linux-image-extra-virtual
+  usbutils libudev-dev build-essential libusb-1.0-0-dev linux-image-extra-virtual && \
+	apt-get -y autoremove
+
+su vagrant
 
 # Install Rust
-su vagrant -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-source /home/vagrant/.cargo/env
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source ~/.cargo/env
 rustup install nightly
 rustup default nightly
 rustup target add thumbv6m-none-eabi
 
 # $PATH
-touch /home/vagrant/.bashrc
-echo "export PATH=\$PATH:/usr/local/bin:\$HOME/.cargo/bin" >> /home/vagrant/.bashrc
+touch ~/.bashrc
+echo "export PATH=\$PATH:/usr/local/bin:\$HOME/.cargo/bin" >> ~/.bashrc
 
 # Arduino CLI
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=/usr/local/bin sh
 arduino-cli core install arduino:samd
 
+su
+
 # Add udev rules for ensuring USB access.
 cat <<EOF > /etc/udev/rules.d/20-hw1.rules
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8057", TAG+="uaccess", TAG+="udev-acl"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", TAG+="uaccess", TAG+="udev-acl"
 EOF
 udevadm trigger
 udevadm control --reload-rules
