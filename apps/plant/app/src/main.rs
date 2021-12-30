@@ -8,10 +8,11 @@ extern crate arduino_nano33iot as bsp;
 use {
     alloc_cortex_m::CortexMHeap,
     bsp::entry,
+    bsp::hal::clock::{ClockGenId, ClockSource, GenericClockController},
     bsp::hal::delay::Delay,
     bsp::hal::pac::{CorePeripherals, Peripherals},
     bsp::hal::prelude::*,
-    bsp::hal::clock::GenericClockController,
+    bsp::hal::rtc,
     bsp::Pins,
     panic_halt as _,
 };
@@ -39,6 +40,12 @@ fn main() -> ! {
     );
     let mut delay = Delay::new(core.SYST, &mut clocks);
 
+    let timer_clock = clocks
+        .configure_gclk_divider_and_source(ClockGenId::GCLK3, 32, ClockSource::OSC32K, true)
+        .unwrap();
+    let rtc_clock = clocks.rtc(&timer_clock).unwrap();
+    let rtc = rtc::Rtc::clock_mode(peripherals.RTC, rtc_clock.freq(), &mut peripherals.PM);
+
     let logger = usb_logger::USBLogger::new(
         peripherals.USB,
         &mut clocks,
@@ -64,13 +71,17 @@ fn main() -> ! {
     led.set_high().unwrap();
 
     loop {
+        let time = rtc.current_time();
         let temperature = temperature_sensor.read().unwrap();
         let moisture = moisture_sensor.read().unwrap();
         logger.log(
             alloc::format!(
-                "Temperature: {}°C\r\nMoisture: {}\r\n",
+                "Temperature: {}°C\r\nMoisture: {}\r\nTime: {:02}:{:02}:{:02}\r\n",
                 temperature,
                 moisture,
+                time.hours,
+                time.minutes,
+                time.seconds,
             )
             .as_bytes(),
         );

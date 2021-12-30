@@ -30,14 +30,14 @@ impl Moisture {
         // Set the gain to be 1x, as the default is /2.
         adc.gain(bsp::pac::adc::inputctrl::GAIN_A::_1X);
 
-        Moisture { adc: adc, pin: pin }
+        Moisture { adc, pin }
     }
 
     /// Reads the current moisture level.
     pub fn read(&mut self) -> Result<u16> {
-        return match self.adc.read(&mut self.pin) {
+        match self.adc.read(&mut self.pin) {
             Ok(val) => Ok(val),
             Err(_) => Err(SensorError::ReadError),
-        };
+        }
     }
 }

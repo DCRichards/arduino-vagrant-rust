@@ -29,9 +29,9 @@ impl<'a> Temperature<'a> {
         };
 
         Ok(Temperature {
-            delay: delay,
-            one_wire: one_wire,
-            sensor: sensor,
+            delay,
+            one_wire,
+            sensor,
         })
     }
 

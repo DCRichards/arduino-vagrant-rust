@@ -32,10 +32,10 @@ impl USBLogger {
         };
 
         unsafe {
-            USB_SERIAL = Some(SerialPort::new(&bus_allocator));
+            USB_SERIAL = Some(SerialPort::new(bus_allocator));
             USB_BUS = Some(
                 // vendor id, product id
-                UsbDeviceBuilder::new(&bus_allocator, UsbVidPid(0x2341, 0x8057))
+                UsbDeviceBuilder::new(bus_allocator, UsbVidPid(0x2341, 0x8057))
                     .manufacturer("Arduino LLC")
                     .product("Arduino NANO 33 IoT")
                     .serial_number("4197FF4750535131332E3120FF0B1541")
@@ -53,10 +53,10 @@ impl USBLogger {
     pub fn log(&self, bytes: &[u8]) {
         cortex_m::interrupt::free(|_| unsafe {
             USB_BUS.as_mut().map(|_| {
-                USB_SERIAL.as_mut().map(|serial| {
+                if let Some(serial) = USB_SERIAL.as_mut() {
                     // Skip errors so we can continue the program
                     let _ = serial.write(bytes);
-                });
+                }
             })
         });
     }
@@ -64,12 +64,12 @@ impl USBLogger {
 
 #[interrupt]
 unsafe fn USB() {
-    USB_BUS.as_mut().map(|usb_dev| {
-        USB_SERIAL.as_mut().map(|serial| {
+    if let Some(usb_dev) = USB_BUS.as_mut() {
+        if let Some(serial) = USB_SERIAL.as_mut() {
             usb_dev.poll(&mut [serial]);
             let mut buf = [0u8; 16];
             let _ = serial.read(&mut buf);
             // log(&buf);
-        });
-    });
+        }
+    }
 }
