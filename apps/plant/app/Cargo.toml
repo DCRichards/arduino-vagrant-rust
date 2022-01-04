@@ -12,5 +12,5 @@ usbd-serial = "0.1.1"
 usb-device = "0.2.8"
 cortex-m = "0.7.3"
 cortex-m-rt = { version = "0.7.0", features = ["device"] }
-alloc-cortex-m = "0.4.1"
+ssd1306 = "0.7.0"
 lib = { path = "../lib" }

@@ -3,6 +3,8 @@ use {
     bsp::hal::usb::UsbBus,
     bsp::pac::{interrupt, PM, USB},
     bsp::usb_allocator,
+    core::fmt::{Error, Write},
+    core::result::Result,
     cortex_m::peripheral::NVIC,
     usb_device::bus::UsbBusAllocator,
     usb_device::prelude::*,
@@ -50,15 +52,22 @@ impl USBLogger {
     }
 
     /// Log writes a log entry
-    pub fn log(&self, bytes: &[u8]) {
+    pub fn log(&self, s: &str) {
         cortex_m::interrupt::free(|_| unsafe {
             USB_BUS.as_mut().map(|_| {
                 if let Some(serial) = USB_SERIAL.as_mut() {
                     // Skip errors so we can continue the program
-                    let _ = serial.write(bytes);
+                    let _ = serial.write(s.as_bytes());
                 }
             })
         });
+    }
+}
+
+impl Write for USBLogger {
+    fn write_str(&mut self, s: &str) -> Result<(), Error> {
+        self.log(s);
+        Ok(())
     }
 }
 
@@ -69,7 +78,7 @@ unsafe fn USB() {
             usb_dev.poll(&mut [serial]);
             let mut buf = [0u8; 16];
             let _ = serial.read(&mut buf);
-            // log(&buf);
+            // let _ = serial.write(&buf);
         }
     }
 }

@@ -1,50 +1,38 @@
 #![no_std]
 #![no_main]
-#![feature(default_alloc_error_handler)]
 
-extern crate alloc;
 extern crate arduino_nano33iot as bsp;
 
 use {
-    alloc_cortex_m::CortexMHeap,
     bsp::entry,
+    bsp::hal::adc::Adc,
     bsp::hal::clock::{ClockGenId, ClockSource, GenericClockController},
     bsp::hal::delay::Delay,
     bsp::hal::pac::{CorePeripherals, Peripherals},
     bsp::hal::prelude::*,
     bsp::hal::rtc,
+    bsp::hal::time::KiloHertz,
     bsp::Pins,
+    core::fmt::Write,
     panic_halt as _,
 };
 
+mod display;
 mod sensors;
 mod usb_logger;
 
-#[global_allocator]
-static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
-
 #[entry]
 fn main() -> ! {
-    unsafe {
-        ALLOCATOR.init(cortex_m_rt::heap_start() as usize, 1024);
-    };
-
     let mut peripherals = Peripherals::take().unwrap();
     let mut core = CorePeripherals::take().unwrap();
-    let pins = Pins::new(peripherals.PORT);
     let mut clocks = GenericClockController::with_internal_32kosc(
         peripherals.GCLK,
         &mut peripherals.PM,
         &mut peripherals.SYSCTRL,
         &mut peripherals.NVMCTRL,
     );
+    let pins = Pins::new(peripherals.PORT);
     let mut delay = Delay::new(core.SYST, &mut clocks);
-
-    let timer_clock = clocks
-        .configure_gclk_divider_and_source(ClockGenId::GCLK3, 32, ClockSource::OSC32K, true)
-        .unwrap();
-    let rtc_clock = clocks.rtc(&timer_clock).unwrap();
-    let rtc = rtc::Rtc::clock_mode(peripherals.RTC, rtc_clock.freq(), &mut peripherals.PM);
 
     let logger = usb_logger::USBLogger::new(
         peripherals.USB,
@@ -55,35 +43,76 @@ fn main() -> ! {
         &mut core.NVIC,
     );
 
+    let timer_clock = clocks
+        .configure_gclk_divider_and_source(ClockGenId::GCLK3, 32, ClockSource::OSC32K, true)
+        .unwrap();
+    let rtc_clock = clocks.rtc(&timer_clock).unwrap();
+    let rtc = rtc::Rtc::clock_mode(peripherals.RTC, rtc_clock.freq(), &mut peripherals.PM);
+
+    let mut adc = Adc::adc(peripherals.ADC, &mut peripherals.PM, &mut clocks);
+    // Nano 33 IOT has a 10bit resolution
+    adc.resolution(bsp::pac::adc::ctrlb::RESSEL_A::_10BIT);
+    // AREFA = AREF pin according to
+    // https://ww1.microchip.com/downloads/en/DeviceDoc/SAM-D21DA1-Family-Data-Sheet-DS40001882G.pdf#_OPENTOPIC_TOC_PROCESSING_d10240e23103
+    adc.reference(bsp::pac::adc::refctrl::REFSEL_A::AREFA);
+    // Override default of 1/2.
+    adc.gain(bsp::pac::adc::inputctrl::GAIN_A::_1X);
+
+    let i2c = bsp::i2c_master(
+        &mut clocks,
+        KiloHertz(400),
+        peripherals.SERCOM4,
+        &mut peripherals.PM,
+        pins.sda,
+        pins.scl,
+    );
+
+    let oled_display = display::Display::new(i2c);
+    let mut oled_display = match oled_display {
+        Ok(disp) => disp,
+        Err(e) => {
+            if let Some(s) = format_args!("{:?}", e).as_str() {
+                logger.log(s);
+            };
+            panic!("{:?}", e);
+        }
+    };
+
+    oled_display.clear().unwrap();
+    write!(oled_display, "Loading...").unwrap();
+
+    // Pins
     let mut led: bsp::Led = pins.led_sck.into();
     let mut temperature_pin = pins.d2.into_readable_output();
-    let moisture_pin = pins.a0.into_alternate();
+    let mut moisture_pin = pins.a0.into_alternate();
+    let mut ldr_pin = pins.a1.into_alternate();
 
-    let mut moisture_sensor = sensors::Moisture::new(
-        moisture_pin,
-        peripherals.ADC,
-        &mut peripherals.PM,
-        &mut clocks,
-    );
-    let mut temperature_sensor =
-        sensors::Temperature::new(&mut temperature_pin, &mut delay).unwrap();
+    let temperature_sensor = sensors::Temperature::new(&mut temperature_pin, &mut delay);
+    let mut temperature_sensor = match temperature_sensor {
+        Ok(ts) => ts,
+        Err(e) => {
+            if let Some(s) = format_args!("{:?}", e).as_str() {
+                logger.log(s);
+            };
+            panic!();
+        }
+    };
 
+    // Light LED to indicate all OK
     led.set_high().unwrap();
 
     loop {
         let time = rtc.current_time();
         let temperature = temperature_sensor.read().unwrap();
-        let moisture = moisture_sensor.read().unwrap();
-        logger.log(
-            alloc::format!(
-                "Temperature: {}°C\r\nMoisture: {}\r\nTime: {:02}:{:02}:{:02}\r\n",
-                temperature,
-                moisture,
-                time.hours,
-                time.minutes,
-                time.seconds,
-            )
-            .as_bytes(),
-        );
+        let moisture: u16 = adc.read(&mut moisture_pin).unwrap();
+        let light: u16 = adc.read(&mut ldr_pin).unwrap();
+
+        oled_display.clear().unwrap();
+        write!(
+            oled_display,
+            "{:.2}°C\nMoisture: {}\nLight:    {}\n{:02}:{:02}:{:02}",
+            temperature, moisture, light, time.hours, time.minutes, time.seconds,
+        )
+        .unwrap();
     }
 }
