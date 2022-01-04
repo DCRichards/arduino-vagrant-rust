@@ -1,6 +1,7 @@
 #![cfg_attr(not(test), no_std)]
 use onewire::ds18b20::split_temp;
 
+/// Calculate a temperature reading from a raw value.
 pub fn temp_from_raw(raw: u16) -> f32 {
     let (integer, fraction) = split_temp(raw);
     integer as f32 + fraction as f32 / 10000_f32
