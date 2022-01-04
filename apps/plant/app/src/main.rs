@@ -84,8 +84,8 @@ fn main() -> ! {
     // Pins
     let mut led: bsp::Led = pins.led_sck.into();
     let mut temperature_pin = pins.d2.into_readable_output();
-    let mut moisture_pin = pins.a0.into_alternate();
-    let mut ldr_pin = pins.a1.into_alternate();
+    let moisture_pin = pins.a0.into_alternate();
+    let ldr_pin = pins.a1.into_alternate();
 
     let temperature_sensor = sensors::Temperature::new(&mut temperature_pin, &mut delay);
     let mut temperature_sensor = match temperature_sensor {
@@ -94,9 +94,12 @@ fn main() -> ! {
             if let Some(s) = format_args!("{:?}", e).as_str() {
                 logger.log(s);
             };
-            panic!();
+            panic!("{:?}", e);
         }
     };
+
+    let mut soil_moisture_sensor = sensors::SoilMoisture::new(moisture_pin);
+    let mut light_sensor = sensors::Light::new(ldr_pin);
 
     // Light LED to indicate all OK
     led.set_high().unwrap();
@@ -104,8 +107,8 @@ fn main() -> ! {
     loop {
         let time = rtc.current_time();
         let temperature = temperature_sensor.read().unwrap();
-        let moisture: u16 = adc.read(&mut moisture_pin).unwrap();
-        let light: u16 = adc.read(&mut ldr_pin).unwrap();
+        let moisture = soil_moisture_sensor.read(&mut adc).unwrap();
+        let light = light_sensor.read(&mut adc).unwrap();
 
         oled_display.clear().unwrap();
         write!(
