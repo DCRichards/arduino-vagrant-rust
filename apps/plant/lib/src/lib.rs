@@ -7,9 +7,22 @@ pub fn temp_from_raw(raw: u16) -> f32 {
     integer as f32 + fraction as f32 / 10000_f32
 }
 
+pub fn percent_from_adc_reading(resolution: u32, reading: u16) -> f32 {
+    let p = i32::pow(2, resolution) as f32;
+    reading as f32 / p * 100.0
+}
+
 #[cfg(test)]
 mod tests {
+    use super::percent_from_adc_reading;
     use super::temp_from_raw;
+
+    #[test]
+    fn test_percent_from_adc_reading() {
+        assert_eq!(percent_from_adc_reading(10, 1024), 100.0);
+        assert_eq!(percent_from_adc_reading(10, 0), 0.0);
+        assert_eq!(percent_from_adc_reading(10, 32), 3.125);
+    }
 
     #[test]
     fn test_temp_from_raw() {

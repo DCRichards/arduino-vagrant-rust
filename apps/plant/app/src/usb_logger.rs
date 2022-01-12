@@ -5,6 +5,7 @@ use {
     bsp::usb_allocator,
     core::fmt::{Error, Write},
     core::result::Result,
+    cortex_m::interrupt::free,
     cortex_m::peripheral::NVIC,
     usb_device::bus::UsbBusAllocator,
     usb_device::prelude::*,
@@ -45,6 +46,7 @@ impl USBLogger {
                     .build(),
             );
             nvic.set_priority(interrupt::USB, 1);
+            // Enable the interrupt in the NVIC.
             NVIC::unmask(interrupt::USB);
         }
 
@@ -53,7 +55,7 @@ impl USBLogger {
 
     /// Log writes a log entry
     pub fn log(&self, s: &str) {
-        cortex_m::interrupt::free(|_| unsafe {
+        free(|_| unsafe {
             USB_BUS.as_mut().map(|_| {
                 if let Some(serial) = USB_SERIAL.as_mut() {
                     // Skip errors so we can continue the program
