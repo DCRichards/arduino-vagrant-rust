@@ -1,7 +1,8 @@
 [package]
 name = "lib"
+authors = ["DCRichards"]
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 onewire = "0.3.13"

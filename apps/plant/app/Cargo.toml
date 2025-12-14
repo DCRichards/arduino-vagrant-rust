@@ -2,7 +2,7 @@
 name = "plant"
 version = "0.0.0"
 authors = ["DCRichards"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 arduino_nano33iot = { git = "https://github.com/atsamd-rs/atsamd.git", features = ["unproven", "usb"] }

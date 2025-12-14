@@ -74,7 +74,7 @@ impl Write for USBLogger {
 }
 
 #[interrupt]
-unsafe fn USB() {
+unsafe fn USB() { unsafe {
     if let Some(usb_dev) = USB_BUS.as_mut() {
         if let Some(serial) = USB_SERIAL.as_mut() {
             usb_dev.poll(&mut [serial]);
@@ -83,4 +83,4 @@ unsafe fn USB() {
             // let _ = serial.write(&buf);
         }
     }
-}
+}}
