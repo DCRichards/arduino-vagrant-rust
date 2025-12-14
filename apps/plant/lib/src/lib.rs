@@ -7,8 +7,9 @@ pub fn temp_from_raw(raw: u16) -> f32 {
     integer as f32 + fraction as f32 / 10000_f32
 }
 
+/// Calculate a percentage from an ADC reading of the given resolution.
 pub fn percent_from_adc_reading(resolution: u32, reading: u16) -> f32 {
-    let p = i32::pow(2, resolution) as f32;
+    let p = i32::pow(2, resolution) as f32 - 1.0;
     reading as f32 / p * 100.0
 }
 
@@ -19,9 +20,10 @@ mod tests {
 
     #[test]
     fn test_percent_from_adc_reading() {
-        assert_eq!(percent_from_adc_reading(10, 1024), 100.0);
+        assert_eq!(percent_from_adc_reading(10, 1023), 100.0);
         assert_eq!(percent_from_adc_reading(10, 0), 0.0);
-        assert_eq!(percent_from_adc_reading(10, 32), 3.125);
+        assert_eq!(percent_from_adc_reading(10, 512), 50.048874);
+        assert_eq!(percent_from_adc_reading(12, 2048), 50.012215);
     }
 
     #[test]
